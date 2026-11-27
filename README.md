@@ -104,3 +104,7 @@ Official API examples define `200` for booking creation and `201` for deletion. 
 ## AI collaboration
 
 The worklog records implementation decisions, independent AI review, human approval and verification evidence. [AI_WORKLOG.md](AI_WORKLOG.md) · [AGENTS.md](AGENTS.md)
+
+## Optional bonus
+
+The separate Codex-to-Playwright pipeline generates and runs one candidate UI test from a text case. The bonus documentation contains setup, three preserved examples and their execution results. [Bonus README](bonus/README.md)

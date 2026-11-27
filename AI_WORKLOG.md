@@ -59,3 +59,9 @@ Public runs had zero failures, skips and flaky tests. Controlled regressions ran
 | `workflow_dispatch` | 14 passed in 9.7s | [Run](https://github.com/VovaS05/qa-automation-assessment/actions/runs/45993337049) · [Report artifact](https://github.com/VovaS05/qa-automation-assessment/actions/runs/45993337049/artifacts/15193909551) |
 
 Both downloaded reports contained 14 passes and zero failures, skips or retries. The dispatch stayed pending while the push was active. Its job started three seconds after the push job finished. GitHub can replace the single pending run when a newer event arrives. [Concurrency semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency)
+
+## Optional bonus
+
+The user authorized an isolated text-to-Playwright pipeline and a reviewable feature branch. On 2026-11-27, Codex CLI `0.171.0-alpha.13.2` used the existing ChatGPT login and `gpt-6.2-sol` to generate three specs in separate headless calls. All three original specs passed TypeScript, one-test discovery and Chromium execution against the captured SauceDemo app.
+
+The implementing agent reviewed the specs against their exact inputs. The review required zero manual spec corrections. A controlled hidden checkout error failed the generated visibility assertion. During pipeline review the agent corrected artifact export handling so it preserved the test outcome when copying the report failed. Controlled failing and passing tests retained their actual outcomes with a separate export diagnostic. [Bonus examples and review](bonus/README.md#examples-and-review)
