@@ -1,0 +1,10 @@
+Recover from a missing first name at checkout
+
+Steps:
+1. Sign in as standard_user and add only Sauce Labs Onesie. Remember its inventory price.
+2. Open the cart and start checkout.
+3. Submit with first name blank, last name Tester, and postal code 94105.
+4. After checking the validation, supply first name Jamie and submit again with the same last name and postal code.
+
+Expected:
+The first submission displays Error: First Name is required visibly and remains on the information page. The corrected submission reaches Checkout: Overview, which shows exactly one item, Sauce Labs Onesie, with quantity 1 at its original price.

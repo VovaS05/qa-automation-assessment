@@ -1,0 +1,110 @@
+{
+  "mode": "generate",
+  "input": "bonus/examples/cart-sync/input.txt",
+  "inputSha256": "caba0f7e75995df9d996d95804b39cb745f80132ecaf3f802fa6078e1017d3a0",
+  "generation": {
+    "cli": "codex-cli 0.171.0-alpha.13.2",
+    "model": "gpt-6.2-sol",
+    "attempts": 1,
+    "invocation": [
+      "codex",
+      "-a",
+      "never",
+      "exec",
+      "--ignore-user-config",
+      "--ignore-rules",
+      "--disable",
+      "shell_tool",
+      "--disable",
+      "hooks",
+      "--disable",
+      "view_image",
+      "-c",
+      "web_search=\"disabled\"",
+      "-c",
+      "project_doc_max_bytes=0",
+      "-c",
+      "forced_login_method=\"chatgpt\"",
+      "-c",
+      "mcp_servers={}",
+      "--sandbox",
+      "read-only",
+      "--skip-git-repo-check",
+      "--ephemeral",
+      "--color",
+      "never",
+      "--model",
+      "gpt-6.2-sol",
+      "--cd",
+      "$RUN/agent",
+      "--output-schema",
+      "$RUN/schema.json",
+      "--json",
+      "--output-last-message",
+      "$RUN/model-response.json",
+      "-"
+    ],
+    "promptSha256": "f651c3cdc6f1374f3470a28793b940e0214a2d70275e83802443d5ee18382f28",
+    "exitCode": 0,
+    "usage": {
+      "input_tokens": 17903,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 404,
+      "reasoning_output_tokens": 0
+    },
+    "toolCalls": 0
+  },
+  "specSha256": "be284f5af58fec83228fa0a485e0cb94a06bec76562c2d41a72c031b94e7cdea",
+  "policy": "passed",
+  "sandbox": {
+    "image": "mcr.microsoft.com/playwright:v1.65.1-noble",
+    "imageId": "sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579",
+    "report": {
+      "typecheck": "passed",
+      "discovery": {
+        "expected": 1,
+        "actual": 1
+      },
+      "execution": {
+        "status": "passed",
+        "exitCode": 0,
+        "stats": {
+          "startTime": "2026-11-27T12:16:34.250Z",
+          "duration": 1435.9789999999998,
+          "expected": 1,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        }
+      },
+      "isolation": {
+        "uid": 1000,
+        "loopbackOnly": true,
+        "suiteWritable": false,
+        "gitPresent": false,
+        "credentialVariables": []
+      }
+    }
+  },
+  "target": {
+    "origin": "https://www.saucedemo.com",
+    "resources": [
+      {
+        "path": "/",
+        "sha256": "85cc79ce580a5629de1345fa497fe7ddd8306a98d9f5cce22f26a9fd13315382"
+      },
+      {
+        "path": "/assets/index-DnLqFcJI.js",
+        "sha256": "2633e5d5739c4aaca3893a9bd70c56b45186dd5a0f00985b8ce66fc044289918"
+      },
+      {
+        "path": "/assets/index-aSZoiKGF.css",
+        "sha256": "1b7a901ed8df78b998cfe29f52fc3f6220452fa301dc0bedfbecf88e9b97ca18"
+      }
+    ]
+  },
+  "artifact": "playwright-artifacts.tar",
+  "stage": "completed",
+  "exitCode": 0
+}

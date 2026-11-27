@@ -1,0 +1,48 @@
+{
+  "verifiedOn": "2026-11-27",
+  "correction": "Require the overview row and the name, quantity and price fields to be visible.",
+  "originalSpecSha256": "f6034a9e940479e4cb2ed5b8cb30ceefa92cc1d89bde6464b214cfd151a0c1a5",
+  "correctedSpecSha256": "597c1ec821b5fbe3fcede7e7dbe36702ca58d6ac35b33c11bce946b3c8720de4",
+  "imageId": "sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579",
+  "mutation": {
+    "description": "Hide the checkout overview product rows with CSS while preserving the DOM and text.",
+    "asset": "index-aSZoiKGF.css",
+    "baselineSha256": "1b7a901ed8df78b998cfe29f52fc3f6220452fa301dc0bedfbecf88e9b97ca18",
+    "mutatedSha256": "646c435e487f5af90b476f39840e3cd67ebc0bd68c9cff69d1d49ebfcb432a1f"
+  },
+  "validation": "Each run passed the AST policy, strict typecheck and one-test discovery. No skips, retries or flaky cases.",
+  "runs": {
+    "original_normal": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 1234.2
+    },
+    "original_mutated": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 1084.3
+    },
+    "corrected_normal": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 1152.9
+    },
+    "corrected_mutated": {
+      "status": "failed",
+      "runnerExit": 5,
+      "playwrightExit": 1,
+      "durationMs": 6268.3
+    }
+  },
+  "correctedMutationFailure": {
+    "assertion": "toBeVisible",
+    "reason": "The expected Onesie row exists but is hidden.",
+    "captured": [
+      "screenshot",
+      "trace"
+    ]
+  }
+}

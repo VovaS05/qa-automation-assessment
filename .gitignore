@@ -18,3 +18,4 @@ ms-playwright/
 .DS_Store
 .vscode/
 .idea/
+/bonus/runs/

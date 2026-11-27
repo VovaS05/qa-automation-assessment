@@ -59,3 +59,24 @@ Public runs had zero failures, skips and flaky tests. Controlled regressions ran
 | `workflow_dispatch` | 14 passed in 9.7s | [Run](https://github.com/VovaS05/qa-automation-assessment/actions/runs/45993337049) · [Report artifact](https://github.com/VovaS05/qa-automation-assessment/actions/runs/45993337049/artifacts/15193909551) |
 
 Both downloaded reports contained 14 passes and zero failures, skips or retries. The dispatch stayed pending while the push was active. Its job started three seconds after the push job finished. GitHub can replace the single pending run when a newer event arrives. [Concurrency semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency)
+
+## Optional bonus
+
+The user authorized an isolated text-to-Playwright pipeline and a reviewable feature branch. On 2026-11-27, Codex CLI `0.171.0-alpha.13.2` used the existing ChatGPT login and `gpt-6.2-sol` to generate three specs in separate headless calls. All three original specs passed TypeScript, one-test discovery and Chromium execution against the captured SauceDemo app.
+
+The implementing agent reviewed the specs against their exact inputs. The first executions required no edits to the generated source. A controlled hidden checkout error failed the generated visibility assertion. During pipeline review the agent corrected artifact export handling so it preserved the test outcome when copying the report failed. Controlled failing and passing tests retained their actual outcomes with a separate export diagnostic. [Bonus examples and review](bonus/README.md#examples-and-review)
+
+### Final independent bonus review
+
+An independent AI reviewer found the issues below. The user approved the remediation plan and the implementing Codex agent made the corrections. The original inputs, generated specs, source hashes and first-run results remain byte-for-byte intact. The raw model responses and event logs were verified against the committed originals and retained locally.
+
+| Finding | Correction and verification |
+| --- | --- |
+| Checkout recovery passed with a hidden Onesie row. | The corrected spec requires the row and its name, quantity and price to be visible. Both versions passed on the unmodified snapshot. The original passed with the row hidden and the corrected spec failed on row visibility. [Evidence](bonus/examples/checkout-recovery/corrected-result.json) · [a9b70b8](https://github.com/VovaS05/qa-automation-assessment/commit/a9b70b8) |
+| Cart sync passed when the second add action did nothing. | The corrected spec clicks Add to cart, checks the visible badge and Remove control, then removes the item again. Both versions passed on the unmodified snapshot. The original passed with an inert click and the corrected spec failed on the missing badge. [Evidence](bonus/examples/cart-sync/corrected-result.json) · [a9b70b8](https://github.com/VovaS05/qa-automation-assessment/commit/a9b70b8) |
+| A successful Playwright process without JSON was reported as a test failure. | A valid pass returned `0` and an assertion failure returned `5`. Missing, malformed, invalid-schema and unreadable JSON after exit `0` returned `6` with execution unverified. A failed assertion plus invalid JSON and a failed export retained exit `5` and all three diagnostics. [61b39a5](https://github.com/VovaS05/qa-automation-assessment/commit/61b39a5) |
+| Host `umask 077` prevented the unprivileged runner from reading staged files. | Replays passed under `022` and `077`. The staging archive sets root ownership explicitly after a synthetic check showed that Docker could preserve the host UID. The container could read the staged files and could not write to them. Its network, mounts, user, capabilities and limits passed the isolation checks. [d5de2bc](https://github.com/VovaS05/qa-automation-assessment/commit/d5de2bc) |
+
+All three originals and both corrected specs passed AST validation, strict TypeScript, discovery and Chromium on the unmodified snapshot, with zero skips, retries or flaky results. The two corrected mutation runs failed at the intended assertions and retained screenshots and traces. The product-details example required no correction. Core discovery remained at 14 and the full local core suite passed. [Snapshot and platform limits](bonus/README.md#security-and-limits)
+
+For a separate generalization check, the independent reviewer asked for a test that cancels Checkout: Overview and verifies two named products, quantity and original prices after a cart reload. The real model produced one executable spec that passed TypeScript, discovery and Chromium on its first run. It failed at the missing badge when a local mutation cleared the cart on Cancel. The same input passed a compatibility run on stable CLI `0.172.0`. The alpha-run source SHA-256 was `2838e48fec10baf439dfef3a6b26408ca0fcff715c6180946f4d98462e85dfaa`. The experiment remains outside the three checked-in examples.
