@@ -1,0 +1,10 @@
+Product details and return to the catalog
+
+Steps:
+1. Sign in as standard_user in a fresh session.
+2. Find Sauce Labs Fleece Jacket in the inventory and remember its displayed name, price and description.
+3. Open that product and compare those three fields.
+4. Use Back to products.
+
+Expected:
+The detail page is visible and shows the captured name, price and description. Returning opens the inventory and the same product is visible there at the original price.

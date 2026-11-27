@@ -1,0 +1,10 @@
+Removing an item on its details page updates the cart
+
+Steps:
+1. Sign in as standard_user and add only Sauce Labs Bike Light from the inventory.
+2. Verify the cart badge reads 1, then open the same product's details.
+3. Remove the product from its details page and verify it can be added again there.
+4. Open the cart.
+
+Expected:
+The cart indicator updates to Cart, empty and the badge disappears. The cart page opens, its list is visible, and it contains zero product rows.
