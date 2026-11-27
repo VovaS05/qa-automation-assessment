@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmod, copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, cp, lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pageFiles } from './policy.mts';
@@ -58,18 +58,31 @@ async function snapshot(stage: string) {
   return { origin, resources };
 }
 
+async function setStagePermissions(directory: string) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      await setStagePermissions(path);
+    } else if (entry.isFile()) {
+      const { mode } = await lstat(path);
+      await chmod(path, mode & 0o111 ? 0o755 : 0o644);
+    }
+  }
+  await chmod(directory, 0o755);
+}
+
 export async function runSandbox(repo: string, run: string, source: string) {
   const env = { PATH: process.env.PATH, HOME: homedir(), DOCKER_CONFIG: process.env.DOCKER_CONFIG };
   const context = process.env.BONUS_DOCKER_CONTEXT ||
     spawnSync('docker', ['context', 'show'], { env, encoding: 'utf8', timeout: 10_000 }).stdout?.trim();
   if (!context) throw new Error('A local Docker context is required for bonus execution');
-  function docker(args: string[], timeout = 20_000) {
+  function docker(args: string[], timeout = 20_000, input?: Buffer) {
     return spawnSync('docker', ['--context', context!, ...args], {
-      env, timeout, maxBuffer: 32 * 1024 * 1024,
+      env, timeout, input, maxBuffer: 32 * 1024 * 1024,
     });
   }
-  function successful(args: string[], timeout?: number): Buffer {
-    const result = docker(args, timeout);
+  function successful(args: string[], timeout?: number, input?: Buffer): Buffer {
+    const result = docker(args, timeout, input);
     if (result.status !== 0) {
       throw new Error(result.error?.message || result.stderr?.toString().trim() || `docker ${args[0]} failed`);
     }
@@ -86,10 +99,10 @@ export async function runSandbox(repo: string, run: string, source: string) {
   const imageId = imageResult.stdout.toString().trim();
   if (!/^sha256:[a-f0-9]{64}$/.test(imageId)) throw new Error('Docker returned an invalid image ID');
 
-  const stage = await mkdtemp(join(tmpdir(), 'qa-bonus-suite-'));
+  const temporary = await mkdtemp(join(tmpdir(), 'qa-bonus-suite-'));
+  const stage = join(temporary, 'suite');
   let container: string | undefined;
   try {
-    await chmod(stage, 0o755);
     const app = await snapshot(stage);
     await mkdir(join(stage, 'pages'));
     for (const name of pageFiles) {
@@ -106,6 +119,18 @@ export async function runSandbox(repo: string, run: string, source: string) {
       compilerOptions: { strict: true, noEmit: true, target: 'ES2022', module: 'NodeNext', types: ['node'] },
       files: ['generated.spec.ts'],
     }));
+    await setStagePermissions(stage);
+    // Docker can preserve source ownership, so set root ownership in the archive.
+    const archiver = process.platform === 'darwin'
+      ? { command: '/usr/bin/tar', options: ['--uid', '0', '--gid', '0',
+        '--no-xattrs', '--no-acls', '--no-fflags', '--no-mac-metadata'] }
+      : { command: 'tar', options: ['--owner=0', '--group=0', '--numeric-owner'] };
+    const stagedArchive = spawnSync(archiver.command, ['-czf', '-', ...archiver.options, '-C', stage, '.'], {
+      env, timeout: 20_000, maxBuffer: 32 * 1024 * 1024,
+    });
+    if (stagedArchive.status !== 0) {
+      throw new Error(stagedArchive.error?.message || stagedArchive.stderr?.toString().trim() || 'Could not archive the staged suite');
+    }
     const id = successful([
       'create', '--pull=never', '--network=none', '--user=1000:1000', '--init',
       '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=192',
@@ -114,7 +139,7 @@ export async function runSandbox(repo: string, run: string, source: string) {
     ]).toString().trim();
     if (!/^[a-f0-9]{64}$/.test(id)) throw new Error('Docker returned an invalid container ID');
     container = id;
-    successful(['cp', `${stage}/.`, `${container}:/suite`], 45_000);
+    successful(['cp', '-', `${container}:/suite`], 45_000, stagedArchive.stdout);
     const settings = JSON.parse(successful(['inspect', container]).toString())[0];
     if (settings.HostConfig.NetworkMode !== 'none' || settings.Mounts.length !== 0 ||
         settings.HostConfig.Privileged || settings.Config.User !== '1000:1000') {
@@ -142,6 +167,6 @@ export async function runSandbox(repo: string, run: string, source: string) {
     return { exitCode, report, image, imageId, app, artifact };
   } finally {
     if (container) docker(['rm', '-f', container]);
-    await rm(stage, { recursive: true, force: true });
+    await rm(temporary, { recursive: true, force: true });
   }
 }
