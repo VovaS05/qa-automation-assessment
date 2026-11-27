@@ -28,10 +28,10 @@ export class InventoryPage {
     return { name, price };
   }
 
-  async readProducts() {
-    return Promise.all((await this.items.all()).map(async (item) => ({
-      name: await item.getByTestId('inventory-item-name').innerText({ timeout: 5_000 }),
-      price: await item.getByTestId('inventory-item-price').innerText({ timeout: 5_000 }),
+  readProducts() {
+    return this.items.evaluateAll((items) => items.map((item) => ({
+      name: item.querySelector<HTMLElement>('[data-test="inventory-item-name"]')?.innerText ?? '',
+      price: item.querySelector<HTMLElement>('[data-test="inventory-item-price"]')?.innerText ?? '',
     })));
   }
 }
