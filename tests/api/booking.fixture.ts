@@ -24,59 +24,92 @@ export async function expectBooking(response: APIResponse, expected: Booking) {
   expect(await json(response, 200)).toEqual(expected);
 }
 
-export const test = base.extend<{ booker: Booker; createBooking: CreateBooking }>({
+export async function readOwnedBooking(
+  booker: Booker,
+  { id, initial }: OwnedBooking,
+  { allowMissing = false } = {},
+): Promise<unknown> {
+  const response = await booker.get(id);
+  if (allowMissing && response.status() === 404) return undefined;
+
+  const body = await json(response, 200);
+  if (!body || typeof body !== 'object' ||
+      !('firstname' in body) || body.firstname !== initial.firstname ||
+      !('lastname' in body) || body.lastname !== initial.lastname) {
+    throw new Error(`Refusing to mutate booking ${id} without ownership marker ${initial.lastname}`);
+  }
+  return body;
+}
+
+export const test = base.extend<{ booker: Booker; isolatedBooker: Booker; createBooking: CreateBooking }>({
   booker: async ({ request }, use) => {
     await use(new Booker(request));
   },
 
+  isolatedBooker: async ({ playwright, baseURL }, use) => {
+    const request = await playwright.request.newContext({ baseURL });
+    try {
+      await use(new Booker(request));
+    } finally {
+      await request.dispose();
+    }
+  },
+
   createBooking: [async ({ booker }, use, testInfo) => {
+    let marker: string | undefined;
     let owned: OwnedBooking | undefined;
 
     try {
       await use(async (token) => {
-        if (owned) throw new Error('This fixture supports one owned booking per test');
+        if (marker) throw new Error('This fixture supports one booking creation attempt per test');
+        marker = `QA-${randomUUID()}`;
 
         const initial: Booking = {
           firstname: 'Assessment',
-          lastname: `QA-${randomUUID()}`,
+          lastname: marker,
           totalprice: 145,
           depositpaid: true,
           bookingdates: { checkin: '2030-04-10', checkout: '2030-04-13' },
           additionalneeds: 'Breakfast',
         };
-        const response = await booker.create(initial);
-        let body: unknown;
+        let status: number | undefined;
         try {
-          body = await response.json();
-        } catch {
-          throw new Error(`Create booking returned non-JSON (HTTP ${response.status()}) for ${initial.lastname}`);
-        }
+          const response = await booker.create(initial);
+          status = response.status();
+          const body: unknown = await response.json().catch(() => {
+            throw new Error(`Create booking returned non-JSON (HTTP ${status})`);
+          });
 
-        // Register a usable ID before asserting the response contract.
-        const id = body && typeof body === 'object' && 'bookingid' in body ? body.bookingid : undefined;
-        if (typeof id === 'number' && Number.isSafeInteger(id) && id > 0) {
-          owned = { id, initial, token };
-        }
+          // Keep any usable ID so teardown can check ownership after a rejected response.
+          const id = body && typeof body === 'object' && 'bookingid' in body ? body.bookingid : undefined;
+          if (typeof id === 'number' && Number.isSafeInteger(id) && id > 0) {
+            owned = { id, initial, token };
+          }
 
-        expect(response.status(), 'Create booking status').toBe(200);
-        expect(response.headers()['content-type']).toMatch(/^application\/json\b/i);
-        if (!owned) {
-          throw new Error(`Create booking did not return a valid ID for ${initial.lastname}`);
-        }
+          expect(status, 'Create booking status').toBe(200);
+          expect(response.headers()['content-type']).toMatch(/^application\/json\b/i);
+          if (!owned) throw new Error('Create booking did not return a valid ID');
 
-        const expected: CreatedBooking = { bookingid: owned.id, booking: initial };
-        expect(body).toEqual(expected);
-        return owned;
+          const expected: CreatedBooking = { bookingid: owned.id, booking: initial };
+          expect(body).toEqual(expected);
+          return owned;
+        } catch (error) {
+          await testInfo.attach('booking creation failure', {
+            body: [
+              `Ownership marker: ${marker}`,
+              `HTTP status: ${status ?? 'unavailable'}`,
+              `Booking ID: ${owned?.id ?? 'unavailable'}`,
+            ].join('\n'),
+            contentType: 'text/plain',
+          });
+          throw error;
+        }
       });
     } finally {
       if (owned) {
         const { id, initial, token } = owned;
         try {
-          const current = await booker.get(id);
-          if (current.status() !== 404) {
-            const body = await json(current, 200);
-            expect(body, `Refusing to delete booking ${id} without its ownership marker`)
-              .toMatchObject({ firstname: initial.firstname, lastname: initial.lastname });
+          if ((await readOwnedBooking(booker, owned, { allowMissing: true })) !== undefined) {
             expect((await booker.delete(id, token)).status(), `Cleanup DELETE for booking ${id}`).toBe(201);
             expect((await booker.get(id)).status(), `Booking ${id} after cleanup`).toBe(404);
           }

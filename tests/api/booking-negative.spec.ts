@@ -1,7 +1,7 @@
-import { authenticate, expect, expectBooking, json, test } from './booking.fixture';
+import { authenticate, expect, expectBooking, json, readOwnedBooking, test } from './booking.fixture';
 
-test('API-02 rejects invalid credentials without issuing a token', async ({ booker }) => {
-  const response = await booker.authenticate({ username: 'admin', password: 'invalid-demo-password' });
+test('API-02 rejects invalid credentials without issuing a token', async ({ isolatedBooker }) => {
+  const response = await isolatedBooker.authenticate({ username: 'admin', password: 'invalid-demo-password' });
   const body = await json(response, 200);
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new Error('Expected a JSON object for the authentication error');
@@ -10,21 +10,23 @@ test('API-02 rejects invalid credentials without issuing a token', async ({ book
   expect(body).toEqual({ reason: 'Bad credentials' });
 });
 
-test('API-03 rejects an unauthenticated update and preserves the booking', async ({ booker, createBooking }) => {
-  const { id, initial } = await createBooking(await authenticate(booker));
-  await expectBooking(await booker.get(id), initial);
+test('API-03 rejects an unauthenticated update and preserves the booking', async ({ booker, isolatedBooker, createBooking }) => {
+  const booking = await createBooking(await authenticate(booker));
+  const { id, initial } = booking;
+  expect(await readOwnedBooking(booker, booking)).toEqual(initial);
 
-  const response = await booker.update(id, { ...initial, totalprice: initial.totalprice + 100 });
+  const response = await isolatedBooker.update(id, { ...initial, totalprice: initial.totalprice + 100 });
 
   expect.soft(response.status(), 'Update without authorization').toBe(403);
   await expectBooking(await booker.get(id), initial);
 });
 
-test('API-04 rejects deletion with an invalid token and preserves the booking', async ({ booker, createBooking }) => {
-  const { id, initial } = await createBooking(await authenticate(booker));
-  await expectBooking(await booker.get(id), initial);
+test('API-04 rejects deletion with an invalid token and preserves the booking', async ({ booker, isolatedBooker, createBooking }) => {
+  const booking = await createBooking(await authenticate(booker));
+  const { id, initial } = booking;
+  expect(await readOwnedBooking(booker, booking)).toEqual(initial);
 
-  const response = await booker.delete(id, 'invalid-assessment-token');
+  const response = await isolatedBooker.delete(id, 'invalid-assessment-token');
 
   expect.soft(response.status(), 'Delete with an invalid token').toBe(403);
   await expectBooking(await booker.get(id), initial);
