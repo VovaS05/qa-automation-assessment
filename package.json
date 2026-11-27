@@ -11,7 +11,10 @@
     "test:ui": "playwright test --project=ui",
     "test:api": "playwright test --project=api",
     "test:list": "playwright test --list",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "bonus:generate": "node bonus/pipeline.mts generate",
+    "bonus:run": "node bonus/pipeline.mts run",
+    "bonus:typecheck": "tsc -p bonus/tsconfig.json"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",
