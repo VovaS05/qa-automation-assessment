@@ -3,10 +3,11 @@ import { authenticate, expect, expectBooking, json, test } from './booking.fixtu
 test('API-02 rejects invalid credentials without issuing a token', async ({ booker }) => {
   const response = await booker.authenticate({ username: 'admin', password: 'invalid-demo-password' });
   const body = await json(response, 200);
-  expect(body !== null && typeof body === 'object', 'Authentication error is a JSON object').toBe(true);
-  const { token, ...error } = body as Record<string, unknown>;
-  expect(Object.hasOwn(body as object, 'token'), 'Invalid credentials must not issue a token').toBe(false);
-  expect(error).toEqual({ reason: 'Bad credentials' });
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new Error('Expected a JSON object for the authentication error');
+  }
+  expect('token' in body, 'Invalid credentials must not issue a token').toBe(false);
+  expect(body).toEqual({ reason: 'Bad credentials' });
 });
 
 test('API-03 rejects an unauthenticated update and preserves the booking', async ({ booker, createBooking }) => {

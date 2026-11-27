@@ -45,18 +45,27 @@ export const test = base.extend<{ booker: Booker; createBooking: CreateBooking }
           additionalneeds: 'Breakfast',
         };
         const response = await booker.create(initial);
-        expect(response.ok(), 'Create booking returned a non-success status').toBe(true);
-        const body: Partial<CreatedBooking> | null = await response.json();
-        const id = body?.bookingid;
-
-        if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
-          throw new Error(`Create booking did not return a valid ID for ${initial.lastname}`);
+        let body: unknown;
+        try {
+          body = await response.json();
+        } catch {
+          throw new Error(`Create booking returned non-JSON (HTTP ${response.status()}) for ${initial.lastname}`);
         }
-        owned = { id, initial, token };
+
+        // Register a usable ID before asserting the response contract.
+        const id = body && typeof body === 'object' && 'bookingid' in body ? body.bookingid : undefined;
+        if (typeof id === 'number' && Number.isSafeInteger(id) && id > 0) {
+          owned = { id, initial, token };
+        }
 
         expect(response.status(), 'Create booking status').toBe(200);
         expect(response.headers()['content-type']).toMatch(/^application\/json\b/i);
-        expect(body).toEqual({ bookingid: id, booking: initial });
+        if (!owned) {
+          throw new Error(`Create booking did not return a valid ID for ${initial.lastname}`);
+        }
+
+        const expected: CreatedBooking = { bookingid: owned.id, booking: initial };
+        expect(body).toEqual(expected);
         return owned;
       });
     } finally {

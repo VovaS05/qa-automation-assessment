@@ -1,7 +1,7 @@
 export function dollarsToCents(value: string): number {
-  const match = /^\$(\d+)\.(\d{2})$/.exec(value);
+  const match = /^\$(\d+)(?:\.(\d{1,2}))?$/.exec(value);
   if (!match) {
-    throw new Error(`Expected a USD amount with two decimal places, received "${value}"`);
+    throw new Error(`Expected a USD amount with up to two decimal places, received "${value}"`);
   }
-  return Number(match[1]) * 100 + Number(match[2]);
+  return Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0'));
 }
