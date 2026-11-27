@@ -1,0 +1,48 @@
+{
+  "verifiedOn": "2026-11-27",
+  "correction": "Click Add to cart, check the visible badge and Remove control, then remove the product and verify the empty cart.",
+  "originalSpecSha256": "be284f5af58fec83228fa0a485e0cb94a06bec76562c2d41a72c031b94e7cdea",
+  "correctedSpecSha256": "ab90bea4ad38e42592d8e4f128401a74ac1d2e8ffd7e977e340798b54f350110",
+  "imageId": "sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579",
+  "mutation": {
+    "description": "Make Add to cart on the product details page a no-op while preserving the visible button.",
+    "asset": "index-DnLqFcJI.js",
+    "baselineSha256": "2633e5d5739c4aaca3893a9bd70c56b45186dd5a0f00985b8ce66fc044289918",
+    "mutatedSha256": "a543444ede46b75909a5526b09f05a31a2c30c817144f4392936a70fc97565f4"
+  },
+  "validation": "Each run passed the AST policy, strict typecheck and one-test discovery. No skips, retries or flaky cases.",
+  "runs": {
+    "original_normal": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 1005.5
+    },
+    "original_mutated": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 938.9
+    },
+    "corrected_normal": {
+      "status": "passed",
+      "runnerExit": 0,
+      "playwrightExit": 0,
+      "durationMs": 1029.4
+    },
+    "corrected_mutated": {
+      "status": "failed",
+      "runnerExit": 5,
+      "playwrightExit": 1,
+      "durationMs": 6037.9
+    }
+  },
+  "correctedMutationFailure": {
+    "assertion": "toBeVisible",
+    "reason": "The cart badge is absent after clicking Add to cart.",
+    "captured": [
+      "screenshot",
+      "trace"
+    ]
+  }
+}
