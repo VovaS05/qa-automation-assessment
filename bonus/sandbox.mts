@@ -11,8 +11,9 @@ const dependencies = ['@playwright/test', 'playwright', 'playwright-core', 'type
 export type SandboxReport = {
   typecheck: string;
   discovery: string | { expected: number; actual: number };
-  execution: string | { status: string; exitCode: number | null; stats?: Record<string, number> };
+  execution: string | { status: string; exitCode: number | null; stats?: Record<string, number | string> };
   diagnostics?: string;
+  reportError?: string;
   artifactError?: string;
   isolation?: unknown;
 };
@@ -128,12 +129,13 @@ export async function runSandbox(repo: string, run: string, source: string) {
     const report = JSON.parse(log) as SandboxReport;
     let artifact: string | undefined;
     if (typeof report.execution === 'object') {
-      const archive = docker(['cp', `${container}:/tmp/qa-bonus-output/.`, '-']);
-      if (archive.status === 0) {
+      try {
+        const archive = successful(['cp', `${container}:/tmp/qa-bonus-output/.`, '-']);
+        await writeFile(join(run, 'playwright-artifacts.tar'), archive);
         artifact = 'playwright-artifacts.tar';
-        await writeFile(join(run, artifact), archive.stdout);
-      } else {
-        report.artifactError = 'The sandbox report archive could not be exported';
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        report.artifactError = `The sandbox report archive could not be exported: ${message}`;
       }
     }
     const exitCode = result.status === 0 && !artifact ? 6 : result.status as 0 | 4 | 5 | 6;

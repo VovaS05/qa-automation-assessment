@@ -84,13 +84,33 @@ if (process.argv[2] === 'serve') {
     }
 
     const executed = run(testArgs);
+    const execution = { status: 'unverified', exitCode: executed.status };
+    result.execution = execution;
     const reportFile = `${output}/playwright.json`;
-    const stats = existsSync(reportFile) ? JSON.parse(readFileSync(reportFile, 'utf8')).stats : undefined;
+    try {
+      const { suites, stats } = JSON.parse(readFileSync(reportFile, 'utf8'));
+      if (!Array.isArray(suites) || !stats ||
+          !['expected', 'unexpected', 'flaky', 'skipped'].every(key => Number.isSafeInteger(stats[key]) && stats[key] >= 0)) {
+        throw new Error('Expected Playwright suites and nonnegative integer test counts');
+      }
+      execution.stats = stats;
+    } catch (error) {
+      result.reportError = `Required Playwright JSON report is unavailable or invalid: ${error.message}`;
+    }
+
+    const diagnostics = [executed.stdout, executed.stderr, executed.error?.message].filter(Boolean).join('\n');
+    if (executed.status === null || executed.error) {
+      result.diagnostics = diagnostics || `Playwright process ended with signal ${executed.signal ?? 'unknown'}`;
+      return finish(6);
+    }
+    if (executed.status === 0 && !execution.stats) return finish(6);
+
+    const stats = execution.stats;
     const passed = executed.status === 0 && stats?.expected === 1 &&
       stats.unexpected === 0 && stats.flaky === 0 && stats.skipped === 0;
-    result.execution = { status: passed ? 'passed' : 'failed', exitCode: executed.status, stats };
+    execution.status = passed ? 'passed' : 'failed';
     if (!passed) {
-      result.diagnostics = [executed.stdout, executed.stderr, executed.error?.message].filter(Boolean).join('\n');
+      result.diagnostics = diagnostics || `Playwright ended with exit code ${executed.status} without one verified pass`;
     }
     finish(passed ? 0 : 5);
   }

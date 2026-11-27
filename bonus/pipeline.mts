@@ -166,7 +166,8 @@ async function main() {
       target: result.app, artifact: result.artifact,
     });
     const stage = { 0: 'completed', 4: 'validation', 5: 'execution', 6: 'sandbox' }[result.exitCode];
-    return finish(result.exitCode, stage, result.report.diagnostics ?? result.report.artifactError);
+    const diagnostics = [result.report.diagnostics, result.report.reportError, result.report.artifactError].filter(Boolean);
+    return finish(result.exitCode, stage, diagnostics.join('\n') || undefined);
   } catch (error) {
     return finish(6, 'sandbox', error);
   }
