@@ -8,7 +8,8 @@ test('UI-01 standard user can sign in and open the cart', async ({ page }) => {
 
   await expect(page).toHaveURL('/inventory.html');
   await expect(inventory.title).toHaveText('Products');
-  await expect(inventory.items.getByTestId('inventory-item-name')).not.toHaveCount(0);
+  const visibleNames = inventory.items.getByTestId('inventory-item-name').filter({ visible: true });
+  await expect(visibleNames, 'At least one catalog product name is visible').not.toHaveCount(0);
   await inventory.cartLink.click();
   await expect(page.getByTestId('title')).toHaveText('Your Cart');
 });
@@ -31,9 +32,12 @@ for (const { title, credentials, message } of rejectedLogins) {
     const login = new LoginPage(page);
     await login.signIn(credentials);
 
+    await expect(login.error).toBeVisible();
     await expect(login.error).toHaveText(`Epic sadface: ${message}`);
     await expect(page).toHaveURL('/');
+
+    await page.goto('/inventory.html');
+    await expect(page).toHaveURL('/');
     await expect(login.form).toBeVisible();
-    await expect(page.getByTestId('inventory-list')).toHaveCount(0);
   });
 }

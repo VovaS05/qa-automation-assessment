@@ -1,10 +1,12 @@
 import type { Locator, Page } from '@playwright/test';
 
 export class CartItems {
+  readonly list: Locator;
   readonly rows: Locator;
 
   constructor(private readonly page: Page) {
-    this.rows = page.getByTestId('cart-list').getByTestId('inventory-item');
+    this.list = page.getByTestId('cart-list');
+    this.rows = this.list.getByTestId('inventory-item');
   }
 
   item(name: string) {

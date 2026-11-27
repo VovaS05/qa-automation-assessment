@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { CartItems } from '../../pages/cart-items';
 import { CheckoutPage } from '../../pages/checkout';
 import { InventoryPage } from '../../pages/inventory';
 import { LoginPage } from '../../pages/login';
@@ -45,6 +46,12 @@ test('UI-07 places an order with the expected items and totals', async ({ page }
     await expect(checkout.confirmation).toBeVisible();
     await expect(inventory.cartLink).toHaveAccessibleName('Cart, empty');
     await expect(inventory.cartCount).toHaveCount(0);
+
+    await inventory.cartLink.click();
+    await expect(page).toHaveURL('/cart.html');
+    const cart = new CartItems(page);
+    await expect(cart.list).toBeVisible();
+    await expect(cart.rows).toHaveCount(0);
   });
 });
 
@@ -57,6 +64,7 @@ test('UI-10 requires a postal code and preserves the cart when validation fails'
 
   await checkout.submitInformation({ ...customer, postalCode: '' });
 
+  await expect(checkout.error).toBeVisible();
   await expect(checkout.error).toHaveText('Error: Postal Code is required');
   await expect(page).toHaveURL('/checkout-step-one.html');
   await expect(checkout.summary).toHaveCount(0);
